@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { v2 as cloudinary } from "cloudinary";
+import { config } from "dotenv";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+
+config(); // Load .env.local
+
+cloudinary.config({
+  cloud_name: "dsvu1tdge",
+  url: process.env.CLOUDINARY_URL,
+});
 
 function sanitizeFilename(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -23,28 +29,63 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const uploadsDir = path.join(process.cwd(), "public", "uploads");
-  await fs.promises.mkdir(uploadsDir, { recursive: true });
-
   const safeName = sanitizeFilename(file.name);
   const fileName = `${Date.now()}-${safeName}`;
-  const filePath = path.join(uploadsDir, fileName);
 
   const arrayBuffer = await file.arrayBuffer();
-  await fs.promises.writeFile(filePath, Buffer.from(arrayBuffer));
+  const buffer = Buffer.from(arrayBuffer);
 
-  const publicPath = `/uploads/${fileName}`;
+  let result;
+  try {
+    if (type === "video") {
+      result = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          { 
+            resource_type: "video", 
+            public_id: fileName.replace(/\.[^/.]+$/, ""), 
+            filename_override: fileName 
+          },
+          (error, uploadResult) => {
+            if (error) reject(error);
+            else resolve(uploadResult);
+          }
+        ).end(buffer);
+      }) as any;
+    } else { // image
+      result = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          { 
+            resource_type: "image", 
+            public_id: fileName.replace(/\.[^/.]+$/, ""), 
+            filename_override: fileName 
+          },
+          (error, uploadResult) => {
+            if (error) reject(error);
+            else resolve(uploadResult);
+          }
+        ).end(buffer);
+      }) as any;
+    }
 
-  if (type === "video") {
-    return NextResponse.json({
-      filePath: publicPath,
-      title,
-      description,
-    });
-  } else if (type === "image") {
-    return NextResponse.json({
-      imagePath: publicPath,
-    });
+    const publicPath = result.secure_url;
+
+    if (type === "video") {
+      return NextResponse.json({
+        filePath: publicPath,
+        title,
+        description,
+      });
+    } else if (type === "image") {
+      return NextResponse.json({
+        imagePath: publicPath,
+      });
+    }
+  } catch (error: any) {
+    console.error("Cloudinary upload error:", error);
+    return NextResponse.json(
+      { error: `Upload failed: ${error.message}` },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({ error: "Invalid type" }, { status: 400 });

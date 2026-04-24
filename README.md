@@ -21,19 +21,19 @@ A full-stack portfolio site built with **Next.js (App Router)**, **TypeScript**,
 npm install
 ```
 
-2. Copy the example environment file and set your admin password:
+2. Run with local MongoDB (in-memory):
 
 ```bash
-cp .env.example .env.local
+node scripts/dev-with-db.js
 ```
 
-3. Run the development server:
+This starts a temporary MongoDB instance and the Next.js dev server together. Open [http://localhost:3000](http://localhost:3000) to view the site.
+
+3. Or run directly (requires working `MONGODB_URI` in `.env.local`):
 
 ```bash
 npm run dev
 ```
-
-Open [http://localhost:3000](http://localhost:3000) to view the site.
 
 ---
 
@@ -54,9 +54,13 @@ Visit `/admin` to access the admin dashboard.
 
 ## 🗂️ Data Storage
 
-- Primary content lives in `data/siteData.json`
-- Uploaded videos are stored in `public/uploads`
-- Reviews are persisted inside `data/siteData.json`
+**Primary: MongoDB** (`videoeditor` DB, `siteData` collection):
+- Content (bio, projects, videos, reviews etc.) stored in MongoDB.
+- Local dev uses `mongodb-memory-server` (auto-started by `scripts/dev-with-db.js`).
+- Production: set `MONGODB_URI` in `.env.local` pointing to MongoDB Atlas or your own server.
+- Fallback: `data/siteData.json` is used if the DB is unreachable.
+
+**Uploaded videos**: `public/uploads`.
 
 ---
 
@@ -70,7 +74,8 @@ npm run build
 
 ## 🎬 Customization
 
-Update `data/siteData.json` or use the admin panel to edit:
+Use the admin panel to edit:
 - Bio and contact details
 - Projects, experience, and software skills
 - Video library and review collection
+

@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
@@ -12,13 +14,21 @@ type HeaderProps = {
 const navItems = [
   { href: "/", label: "Home" },
   { href: "/projects", label: "Projects" },
-  { href: "/videos", label: "Videos" },
   { href: "/reviews", label: "Reviews" },
+  { href: "/contact", label: "Contact" },
   { href: "/admin", label: "Admin" },
 ];
 
 export default function Header({ name, title }: HeaderProps) {
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/auth', { credentials: 'include' })
+      .then(res => res.json())
+      .then(data => setIsAdmin(data.ok === true))
+      .catch(() => setIsAdmin(false));
+  }, []);
 
   return (
     <header className="sticky top-0 z-30 w-full border-b border-white/10 bg-black/70 backdrop-blur">
@@ -32,7 +42,8 @@ export default function Header({ name, title }: HeaderProps) {
           </Link>
         </div>
         <nav className="hidden items-center gap-4 text-sm font-medium text-white/70 md:flex">
-          {navItems.map((item) => {
+{navItems.map((item) => {
+            if (item.href === '/admin' && !isAdmin) return null;
             const isActive = pathname === item.href;
             return (
               <Link

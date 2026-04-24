@@ -11,6 +11,9 @@ type ProjectCardProps = {
 };
 
 export default function ProjectCard({ title, description, tags, videoPath }: ProjectCardProps) {
+  // Validate videoPath - only show link if it's a valid local path or internal link
+  const isValidPath = videoPath && (videoPath.startsWith('/videos/') || videoPath.startsWith('/uploads/'));
+  
   return (
     <motion.div
       whileHover={{ y: -4, boxShadow: "0 12px 30px rgba(0,0,0,0.45)" }}
@@ -22,7 +25,7 @@ export default function ProjectCard({ title, description, tags, videoPath }: Pro
           <h3 className="text-xl font-semibold text-white">{title}</h3>
           <p className="mt-2 text-sm text-white/70">{description}</p>
         </div>
-        {videoPath ? (
+        {isValidPath ? (
           <Link
             href={videoPath}
             className="rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/15"

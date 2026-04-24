@@ -1,4 +1,5 @@
 import ProjectCard from "@/app/components/ProjectCard";
+import VideoCard from "@/app/components/VideoCard";
 import Section from "@/app/components/Section";
 import { getSiteData } from "@/lib/data";
 
@@ -19,6 +20,22 @@ export default async function ProjectsPage() {
               description={project.description}
               tags={project.tags}
               videoPath={project.videoPath ?? undefined}
+            />
+          ))}
+        </div>
+      </Section>
+
+      <Section
+        title="Video Library"
+        description="Play sample videos and share feedback."
+      >
+        <div className="grid gap-6 md:grid-cols-2">
+          {siteData.videos.map((video) => (
+            <VideoCard
+              key={video.id}
+              title={video.title}
+              description={video.description}
+              filePath={video.filePath}
             />
           ))}
         </div>

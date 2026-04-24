@@ -1,0 +1,5 @@
+﻿{
+  "name": "TestXSSUser<script>alert(1)</script>",
+  "rating": 5,
+  "comment": "This is a valid test comment with enough characters!"
+}

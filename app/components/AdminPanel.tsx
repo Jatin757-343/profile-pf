@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { SiteData, Bio, Project, Experience, Software, VideoItem, Review } from "@/lib/data";
 
-type Tab = "bio" | "projects" | "experience" | "softwares" | "videos" | "upload" | "reviews";
+type Tab = "bio" | "projects" | "experience" | "softwares" | "videos" | "upload" | "reviews" | "contact";
 
 export default function AdminPanel() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
@@ -169,27 +169,32 @@ export default function AdminPanel() {
     return (
       <div className="mx-auto max-w-xl px-6 py-16">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-10">
-          <h1 className="text-2xl font-semibold text-white">Admin Login</h1>
+          <h1 className="text-2xl font-semibold text-white">Admin Access Required</h1>
           <p className="mt-2 text-sm text-white/70">
-            Enter your admin password to update content and upload videos.
+            You must be authenticated as an admin to access this panel.
           </p>
-          <form onSubmit={handleLogin} className="mt-6 space-y-4">
-            <input
-              name="password"
-              type="password"
-              placeholder="Admin password"
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="w-full rounded-full bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
-            >
-              Log in
-            </button>
-          </form>
-          {message ? (
-            <p className="mt-4 text-sm text-rose-300">{message}</p>
-          ) : null}
+          <div className="mt-6 space-y-4">
+            <div className="rounded-xl border border-white/10 bg-black/40 p-4">
+              <p className="text-sm text-white/60">Enter your admin credentials below:</p>
+            </div>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <input
+                name="password"
+                type="password"
+                placeholder="Admin password"
+                className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
+              />
+              <button
+                type="submit"
+                className="w-full rounded-full bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+              >
+                Login to Admin Panel
+              </button>
+            </form>
+            {message ? (
+              <p className="mt-4 text-sm text-rose-300">{message}</p>
+            ) : null}
+          </div>
         </div>
       </div>
     );
@@ -206,6 +211,7 @@ export default function AdminPanel() {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {tabButton("bio", "Bio")}
+          {tabButton("contact", "Contact")}
           {tabButton("projects", "Projects")}
           {tabButton("experience", "Experience")}
           {tabButton("softwares", "Softwares")}
@@ -235,6 +241,8 @@ export default function AdminPanel() {
           <ProjectsForm projects={siteData.projects} onSave={(updatedProjects) => handleSave({ ...siteData, projects: updatedProjects })} />
         ) : tab === "experience" && siteData ? (
           <ExperienceForm experience={siteData.experience} onSave={(updatedExperience) => handleSave({ ...siteData, experience: updatedExperience })} />
+        ) : tab === "contact" && siteData ? (
+          <ContactForm bio={siteData.bio} onSave={(updatedBio) => handleSave({ ...siteData, bio: updatedBio })} />
         ) : tab === "softwares" && siteData ? (
           <SoftwaresForm softwares={siteData.softwares} onSave={(updatedSoftwares) => handleSave({ ...siteData, softwares: updatedSoftwares })} />
         ) : tab === "videos" && siteData ? (
@@ -379,13 +387,6 @@ function BioForm({ bio, onSave }: { bio: Bio; onSave: (updated: Bio) => void }) 
           className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
         />
       </div>
-      <input
-        type="url"
-        placeholder="Website"
-        value={formData.contact.website}
-        onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, website: e.target.value } })}
-        className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
-      />
       <div className="space-y-2">
         <label className="text-sm text-white/70">Social Links (one per line, format: name=url)</label>
         <textarea
@@ -761,6 +762,94 @@ function ReviewsForm({ reviews, onSave }: { reviews: Review[]; onSave: (updated:
       ))}
       <button type="submit" className="rounded-full bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/15">
         Save Reviews
+      </button>
+    </form>
+  );
+}
+
+function ContactForm({ bio, onSave }: { bio: Bio; onSave: (updated: Bio) => void }) {
+  const [formData, setFormData] = useState(bio);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <h2 className="text-xl font-semibold text-white">Contact Information</h2>
+      <p className="text-sm text-white/70">
+        Manage your contact details that will be displayed on the contact section of your portfolio.
+      </p>
+
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-6">
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-white/80">Mobile Number</label>
+          <input
+            type="tel"
+            placeholder="+1 (555) 123-4567"
+            value={formData.contact.phone}
+            onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, phone: e.target.value } })}
+            className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-white/80">Email Address</label>
+          <input
+            type="email"
+            placeholder="your.email@gmail.com"
+            value={formData.contact.email}
+            onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, email: e.target.value } })}
+            className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-white/80">Instagram Profile Link</label>
+          <input
+            type="url"
+            placeholder="https://instagram.com/yourprofile"
+            value={formData.contact.socials?.instagram || ''}
+            onChange={(e) => setFormData({ 
+              ...formData, 
+              contact: { 
+                ...formData.contact, 
+                socials: { ...formData.contact.socials, instagram: e.target.value } 
+              } 
+            })}
+            className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none"
+          />
+          <p className="text-xs text-white/50">Users can visit this link or DM you directly</p>
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-black/40 p-4 space-y-3">
+          <p className="text-sm font-semibold text-white/80">Preview - Contact Options</p>
+          <div className="space-y-2 text-xs text-white/70">
+            {formData.contact.phone && (
+              <div className="flex items-center gap-2">
+                <span className="text-blue-400">📞</span>
+                <span>{formData.contact.phone}</span>
+              </div>
+            )}
+            {formData.contact.email && (
+              <div className="flex items-center gap-2">
+                <span className="text-red-400">📧</span>
+                <span>{formData.contact.email} (Drop a mail)</span>
+              </div>
+            )}
+            {formData.contact.socials?.instagram && (
+              <div className="flex items-center gap-2">
+                <span className="text-pink-400">📱</span>
+                <span>@instagram (DM on insta)</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" className="rounded-full bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/15">
+        Save Contact Information
       </button>
     </form>
   );

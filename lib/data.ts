@@ -1,5 +1,7 @@
+
 import fs from "fs";
 import path from "path";
+import { connectToDatabase } from "./mongodb";
 
 export type Review = {
   id: string;
@@ -42,7 +44,6 @@ export type VideoItem = {
 export type Contact = {
   email: string;
   phone: string;
-  website: string;
   socials: Record<string, string>;
 };
 
@@ -51,7 +52,7 @@ export type Bio = {
   title: string;
   tagline: string;
   about: string;
-  profilePic?: string; // Path to profile picture
+  profilePic: string;
   contact: Contact;
 };
 
@@ -64,69 +65,66 @@ export type SiteData = {
   reviews: Review[];
 };
 
-const dataFile = path.join(process.cwd(), "data", "siteData.json");
-const fallbackFile = path.join(process.cwd(), "data", "initialData.json");
-
-const defaultSiteData: SiteData = {
-  bio: {
-    name: "Video Editor",
-    title: "Professional Editor",
-    tagline: "Loading portfolio...",
-    about: "Site data loading...",
-    profilePic: "",
-    contact: { email: "", phone: "", website: "", socials: {} },
-  },
-  projects: [],
-  experience: [],
-  softwares: [],
-  videos: [],
-  reviews: [],
-};
+const DATA_FILE = path.join(process.cwd(), "data", "siteData.json");
 
 export async function getSiteData(): Promise<SiteData> {
+  let db;
   try {
-    const raw = await fs.promises.readFile(dataFile, "utf-8");
-    return JSON.parse(raw) as SiteData;
-  } catch (error) {
-    try {
-      const raw = await fs.promises.readFile(fallbackFile, "utf-8");
-      return JSON.parse(raw) as SiteData;
-    } catch {
-      console.warn("Using default siteData - no data files found");
-      return defaultSiteData;
+    db = await connectToDatabase();
+    const collection = db.collection("siteData");
+    const doc = await collection.findOne({ _id: "siteData" });
+    if (doc) {
+      const { _id, ...data } = doc;
+      return data as SiteData;
     }
-  }
-}
-
-export async function saveSiteData(data: SiteData) {
-  try {
-    const folder = path.dirname(dataFile);
-    await fs.promises.mkdir(folder, { recursive: true });
-    await fs.promises.writeFile(dataFile, JSON.stringify(data, null, 2), "utf-8");
   } catch (error) {
-    console.error("Failed to save siteData:", error);
+    console.error("Error reading site data from DB:", error);
   }
+
+  // Fallback to JSON file
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const content = fs.readFileSync(DATA_FILE, "utf-8");
+      return JSON.parse(content) as SiteData;
+    }
+  } catch (error) {
+    console.error("Error reading fallback JSON:", error);
+  }
+
+  // Default data
+  return {
+    bio: {
+      name: "Video Editor",
+      title: "Portfolio",
+      tagline: "Crafting stunning visuals",
+      about: "Professional video editor.",
+      profilePic: "",
+      contact: {
+        email: "",
+        phone: "",
+        socials: {},
+      },
+    },
+    projects: [],
+    experience: [],
+    softwares: [],
+    videos: [],
+    reviews: [],
+  };
 }
 
-export async function addReview(rev: Omit<Review, "id" | "date">) {
-  const data = await getSiteData();
-  const review: Review = {
-    ...rev,
-    id: `rev-${Date.now()}`,
-    date: new Date().toISOString(),
-  };
-  data.reviews.unshift(review);
-  await saveSiteData(data);
-  return review;
-}
-
-export async function addVideoItem(video: Omit<VideoItem, "id">) {
-  const data = await getSiteData();
-  const newVideo: VideoItem = {
-    ...video,
-    id: `video-${Date.now()}`,
-  };
-  data.videos.unshift(newVideo);
-  await saveSiteData(data);
-  return newVideo;
+export async function saveSiteData(data: SiteData): Promise<void> {
+  let db;
+  try {
+    db = await connectToDatabase();
+    const collection = db.collection("siteData");
+    await collection.updateOne(
+      { _id: "siteData" },
+      { $set: data },
+      { upsert: true }
+    );
+  } catch (error) {
+    console.error("Error saving site data to DB:", error);
+    throw error;
+  }
 }

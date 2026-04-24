@@ -26,7 +26,7 @@ export default function Home() {
   }
 
   const data = siteData || {
-    bio: { name: "Video Editor", title: "Portfolio", tagline: "Loading...", about: "", profilePic: "", contact: { email: "", phone: "", website: "", socials: {} } },
+    bio: { name: "Video Editor", title: "Portfolio", tagline: "Loading...", about: "", profilePic: "", contact: { email: "", phone: "", socials: {} } },
     projects: [],
     experience: [],
     softwares: [],
@@ -66,14 +66,14 @@ export default function Home() {
               </p>
             </a>
             <a
-              href="/videos"
+              href="/projects"
               className="group rounded-3xl border border-white/10 bg-white/5 p-8 transition hover:border-white/20 hover:bg-white/10"
             >
               <h2 className="text-lg font-semibold text-white group-hover:text-amber-200">
-                Video Library
+                Projects & Videos
               </h2>
               <p className="mt-2 text-sm text-white/60">
-                Watch sample videos and rate the work once you're done.
+                Browse projects with video samples included.
               </p>
             </a>
           </div>
@@ -170,12 +170,10 @@ export default function Home() {
                 Get in Touch
               </a>
               <a
-                href={data.bio.contact.website}
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/contact"
                 className="rounded-full border border-white/10 bg-black px-8 py-4 text-sm font-semibold text-white transition hover:bg-white/10"
               >
-                Visit Website
+                Contact
               </a>
             </div>
           </div>

@@ -28,7 +28,7 @@ export default async function RootLayout({
   const siteData = await getSiteData();
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-black font-sans text-white antialiased`}
       >
@@ -36,7 +36,6 @@ export default async function RootLayout({
         <main className="relative">{children}</main>
         <Footer
           email={siteData.bio.contact.email || ""}
-          website={siteData.bio.contact.website || ""}
           socials={siteData.bio.contact.socials || {}}
         />
       </body>

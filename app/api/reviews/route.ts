@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { addReview, getSiteData } from "@/lib/data";
+import { getSiteData, saveSiteData } from "@/lib/data";
+
+// Simple sanitization function to prevent XSS
+function sanitizeInput(input: string): string {
+  return input
+    .trim()
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .slice(0, 1000); // Max 1000 characters
+}
 
 export async function GET() {
   const data = await getSiteData();
@@ -7,19 +16,50 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  try {
+    const body = await req.json();
 
-  const name = String(body.name ?? "").trim();
-  const rating = Number(body.rating);
-  const comment = String(body.comment ?? "").trim();
+    const name = sanitizeInput(String(body.name ?? ""));
+    const rating = Number(body.rating);
+    const comment = sanitizeInput(String(body.comment ?? ""));
 
-  if (!name || !comment || isNaN(rating) || rating < 1 || rating > 5) {
+    // Validation checks
+    if (!name || name.length < 2) {
+      return NextResponse.json(
+        { error: "Name must be at least 2 characters" },
+        { status: 400 }
+      );
+    }
+
+    if (!comment || comment.length < 10) {
+      return NextResponse.json(
+        { error: "Comment must be at least 10 characters" },
+        { status: 400 }
+      );
+    }
+
+    if (isNaN(rating) || rating < 1 || rating > 5) {
+      return NextResponse.json(
+        { error: "Rating must be between 1 and 5" },
+        { status: 400 }
+      );
+    }
+
+    const data = await getSiteData();
+    const newReview = {
+      id: Date.now().toString(),
+      name,
+      rating,
+      comment,
+      date: new Date().toISOString()
+    };
+    data.reviews.unshift(newReview);
+    await saveSiteData(data);
+    return NextResponse.json(newReview);
+  } catch (error) {
     return NextResponse.json(
-      { error: "Invalid review payload" },
-      { status: 400 }
+      { error: "Failed to process review" },
+      { status: 500 }
     );
   }
-
-  const review = await addReview({ name, rating, comment });
-  return NextResponse.json(review);
 }
